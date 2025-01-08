@@ -1,6 +1,7 @@
 #admin_check.py
 import logging
 from pyrogram.errors import UserNotParticipant, ChatAdminRequired, PeerIdInvalid
+from ForceSubscribeBot.database.chats_sql import get_force_chats
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -43,8 +44,21 @@ async def admin_check(bot, msg, user_id=None, callback_query=None):
                 await msg.reply(text)
             return False
         
+        # Get force chats for the current chat
+        force_chats = await get_force_chats(msg.chat.id)
+        
+        # Check if the user is part of the force subscribe chat (using chat ID)
+        for force_chat_id in force_chats:
+            try:
+                # Check if user is a participant in the force chat
+                await bot.get_chat_member(force_chat_id, user_id)
+            except UserNotParticipant:
+                logger.error(f"User {user_id} is not a participant in the forced chat {force_chat_id}.")
+                await msg.reply(f"You need to join the required group or channel to use this command.")
+                return False
+
         # If everything is fine, return True
-        logger.info(f"User {user_id} has admin rights in chat {msg.chat.id}.")
+        logger.info(f"User {user_id} has admin rights and joined necessary groups/chats in chat {msg.chat.id}.")
         return True
 
     except UserNotParticipant:
