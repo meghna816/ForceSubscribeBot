@@ -4,6 +4,7 @@ import os
 
 # Load environment variables from .env file
 load_dotenv()
+
 # Check if the environment is set to production or development
 ENVIRONMENT = os.environ.get('ENVIRONMENT', 'development')
 
@@ -29,7 +30,7 @@ if ENVIRONMENT == 'production':
         DATABASE_URL = DATABASE_URL.replace("postgres", "postgresql")
 
 else:
-    # Default development values
+    # Default development values - these will only be used if the environment is not set to 'production'
     API_ID = 0
     API_HASH = ""
     BOT_TOKEN = ""
@@ -38,4 +39,9 @@ else:
     PRIVATE_GROUPS = ["234567", "876543"]  # Example private group IDs
 
 # Developer list (can be expanded in production)
-DEVS = [1744109441, 1946995626]
+DEVS = [1744109441, 1946995626]  
+
+# Optional: Add a check for environment variables and ensure default values are provided
+if ENVIRONMENT == 'production' and (not API_ID or not API_HASH or not BOT_TOKEN or not DATABASE_URL):
+    raise ValueError("Some environment variables are missing in production environment. Please check your .env file.")
+
