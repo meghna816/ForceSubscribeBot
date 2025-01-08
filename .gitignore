@@ -1,5 +1,23 @@
-.idea/
+#.gitignore
+# Python Bytecode Files
 __pycache__/
-.gitattributes
 *.pyc
+*.pyo
+
+# Virtual Environment Folders
+venv/
+env/
+
+# IDE Files
+.idea/
+
+# Logs
+*.log
+
+# Test Files
 test.py
+
+# Other files to ignore
+*.env
+*.sqlite
+*.db
