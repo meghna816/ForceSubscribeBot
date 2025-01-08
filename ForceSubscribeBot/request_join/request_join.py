@@ -31,3 +31,17 @@ async def request_join(bot, msg):
         "Click the button below to manage settings or add/remove required chats.",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
+
+    # Check if the user is a member of all required channels/groups
+    for chat in must_join_chats:
+        try:
+            # Try to get the user's status in the channel/group
+            member = await bot.get_chat_member(chat, msg.from_user.id)
+            if member.status == "left":
+                # If the user is not a member, send them an alert
+                await msg.reply(f"Please join @{chat} to interact.")
+                break
+        except Exception as e:
+            # Handle any exception, such as the group being private or the bot not being in the group
+            await msg.reply(f"Could not check the status for @{chat}.")
+            continue
