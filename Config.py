@@ -10,12 +10,11 @@ API_HASH = os.environ.get('API_HASH', None)
 BOT_TOKEN = os.environ.get('BOT_TOKEN', None)
 DATABASE_URL = os.environ.get('DATABASE_URL', None)
 
-# For channels/groups to be joined
-MUST_JOIN = os.environ.get('MUST_JOIN', "").split(',')
+# For channels/groups to be joined using IDs (comma-separated IDs)
+MUST_JOIN = os.environ.get('MUST_JOIN', "").split(',')  # Channel IDs
 
-# For private channels/groups and invite links
-PRIVATE_GROUPS = os.environ.get('PRIVATE_GROUPS', "").split(',')
-PRIVATE_GROUPS_INVITES = os.environ.get('PRIVATE_GROUPS_INVITES', "").split(',')
+# For private channels/groups using IDs (comma-separated IDs)
+PRIVATE_GROUPS = os.environ.get('PRIVATE_GROUPS', "").split(',')  # Private Group IDs
 
 # Validate critical variables
 if ENVIRONMENT == 'production':
@@ -32,9 +31,8 @@ else:
     API_HASH = ""
     BOT_TOKEN = ""
     DATABASE_URL = ""
-    MUST_JOIN = ["StarkBots"]  # Default chat to join in dev environment
-    PRIVATE_GROUPS = ["Group1"]
-    PRIVATE_GROUPS_INVITES = ["invite_link_1"]
+    MUST_JOIN = ["123456", "654321"]  # Default chat to join (use IDs)
+    PRIVATE_GROUPS = ["234567", "876543"]  # Example private group IDs
 
 # Developer list (can be expanded in production)
 DEVS = [1744109441, 1946995626]
