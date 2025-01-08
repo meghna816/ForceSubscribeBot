@@ -1,4 +1,3 @@
-#app.json
 {
   "name": "Force Subscribing Bot",
   "description": "Telegram bot to force users to subscribe a particular chat",
