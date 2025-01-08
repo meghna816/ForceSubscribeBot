@@ -4,7 +4,6 @@ from ForceSubscribeBot.admin_check import admin_check
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from ForceSubscribeBot.database.chats_sql import get_action, get_ignore_service, get_only_owner, chat_exists
 
-
 @Client.on_message(filters.text & filters.incoming & filters.command("settings"))
 async def settings(bot: Client, msg):
     # Ensure the user is an admin
