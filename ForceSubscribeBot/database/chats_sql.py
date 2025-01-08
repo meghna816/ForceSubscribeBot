@@ -1,16 +1,18 @@
 #chats_sql.py
 from sqlalchemy import Column, BigInteger, String, Boolean
 from . import BASE, SESSION
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class Chats(BASE):
     __tablename__ = "chats"
     __table_args__ = {'extend_existing': True}
+    
     channel_id = Column(BigInteger, primary_key=True)
     force_chat = Column(BigInteger)
     action = Column(String)
-    ignore_service = Column(Boolean)
-    only_owner = Column(Boolean)
+    ignore_service = Column(Boolean, default=True)
+    only_owner = Column(Boolean, default=True)
 
     def __init__(self, channel_id, force_chat, action='mute', ignore_service=True, only_owner=True):
         self.channel_id = channel_id
@@ -20,103 +22,91 @@ class Chats(BASE):
         self.only_owner = only_owner
 
 
+# Create table only if it does not exist
 Chats.__table__.create(checkfirst=True)
 
 
-async def num_chats():
+async def _execute_query(query):
     try:
-        return SESSION.query(Chats).count()
+        result = await query
+        SESSION.commit()
+        return result
+    except SQLAlchemyError as e:
+        print(f"Error during query execution: {str(e)}")
+        SESSION.rollback()
+        return None
     finally:
-        SESSION.close()
+        SESSION.remove()
+
+
+async def num_chats():
+    return await _execute_query(SESSION.query(Chats).count())
 
 
 async def get_force_chat(chat_id):
-    q = SESSION.query(Chats).get(chat_id)
-    if q and q.force_chat:
-        chat = q.force_chat
-        SESSION.close()
-        return chat
-    else:
-        return None
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    if chat:
+        return chat.force_chat
+    return None
 
 
 async def change_force_chat(chat_id, force_chat):
-    q = SESSION.query(Chats).get(chat_id)
-    if q:
-        q.force_chat = force_chat
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    if chat:
+        chat.force_chat = force_chat
     else:
-        SESSION.add(Chats(chat_id, force_chat))
-    SESSION.commit()
+        SESSION.add(Chats(channel_id=chat_id, force_chat=force_chat))
+    await _execute_query(SESSION.commit())
 
 
 async def get_action(chat_id):
-    q = SESSION.query(Chats).get(chat_id)
-    if q and q.action:
-        action = q.action
-        SESSION.close()
-        return action
-    else:
-        return None
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    if chat:
+        return chat.action
+    return None
 
 
 async def change_action(chat_id, action):
-    q = SESSION.query(Chats).get(chat_id)
-    if q:
-        q.action = action
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    if chat:
+        chat.action = action
     else:
-        SESSION.add(Chats(chat_id, action))
-    SESSION.commit()
+        SESSION.add(Chats(channel_id=chat_id, action=action))
+    await _execute_query(SESSION.commit())
 
 
 async def get_ignore_service(chat_id):
-    q = SESSION.query(Chats).get(chat_id)
-    if q and q.ignore_service:
-        ignore_service = q.ignore_service
-        SESSION.close()
-        return ignore_service
-    else:
-        return False
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    if chat:
+        return chat.ignore_service
+    return False
 
 
 async def toggle_ignore_service(chat_id, value):
-    q = SESSION.query(Chats).get(chat_id)
-    if q:
-        if value:
-            q.ignore_service = True
-        else:
-            q.ignore_service = False
-        SESSION.commit()
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    if chat:
+        chat.ignore_service = value
+        await _execute_query(SESSION.commit())
         return True
-    else:
-        return False
+    return False
 
 
 async def get_only_owner(chat_id):
-    q = SESSION.query(Chats).get(chat_id)
-    if q and q.only_owner:
-        only_owner = q.only_owner
-        SESSION.close()
-        return only_owner
-    else:
-        return False
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    if chat:
+        return chat.only_owner
+    return False
 
 
 async def toggle_only_owner(chat_id, value):
-    q = SESSION.query(Chats).get(chat_id)
-    if q:
-        if value:
-            q.only_owner = True
-        else:
-            q.only_owner = False
-        SESSION.commit()
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    if chat:
+        chat.only_owner = value
+        await _execute_query(SESSION.commit())
         return True
-    else:
-        return False
+    return False
 
 
 async def chat_exists(chat_id):
-    q = SESSION.query(Chats).get(chat_id)
-    if q:
-        return True
-    else:
-        return False
+    chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
+    return chat is not None
