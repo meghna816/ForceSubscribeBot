@@ -1,6 +1,9 @@
 #Config.py
+from dotenv import load_dotenv
 import os
 
+# Load environment variables from .env file
+load_dotenv()
 # Check if the environment is set to production or development
 ENVIRONMENT = os.environ.get('ENVIRONMENT', 'development')
 
