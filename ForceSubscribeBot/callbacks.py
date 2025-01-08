@@ -7,7 +7,7 @@ from pyrogram.errors.exceptions import UserNotParticipant
 from ForceSubscribeBot.database.chats_sql import (
     get_action,
     change_action,
-    get_force_chat,
+    get_force_chats,  # Updated to handle list of IDs
     get_ignore_service,
     toggle_ignore_service,
     get_only_owner,
@@ -108,34 +108,21 @@ async def _callbacks(bot: Client, callback_query: CallbackQuery):
 
             chat_id = callback_query.message.chat.id
             bot_id = (await bot.get_me()).id
-            force_chat = await get_force_chat(chat_id)
+            force_chats = await get_force_chats(chat_id)  # Get force chat IDs
             bot_chat_member = await bot.get_chat_member(chat_id, bot_id)
-            bot_chat_member2 = await bot.get_chat_member(force_chat, bot_id)
-            chat = await bot.get_chat(force_chat)
-            mention = '@' + chat.username if chat.username else 'the chat'
 
-            if bot_chat_member.status != "administrator":
-                await callback_query.answer("I've been demoted from this chat. I can't unmute you now. Sorry!", show_alert=True)
-                await bot.send_message(chat_id, "I've been demoted here. Of no use then!")
-                return
-
-            if bot_chat_member2.status != "administrator":
-                await callback_query.answer("I've been demoted from the force subscribe chat.", show_alert=True)
-                await bot.send_message(chat_id, "I've been demoted from the force subscribe chat. Of no use then!")
-                return
-
-            not_joined = f"Join {mention} first then try!"
-            try:
-                if user_id == muted_user_id:
-                    await bot.get_chat_member(force_chat, user_id)
-                    await bot.unban_chat_member(chat_id, user_id)
+            # Loop through the force chats to check if user is in all of them
+            for force_chat_id in force_chats:
+                try:
+                    await bot.get_chat_member(force_chat_id, muted_user_id)
+                    # If user is a member, unmute them
+                    await bot.unban_chat_member(chat_id, muted_user_id)
                     await callback_query.answer("Good Kid. You can start chatting properly in group now.", show_alert=True)
                     await callback_query.message.delete()
-                else:
-                    await callback_query.answer('This message is not for you!', show_alert=True)
-            except UserNotParticipant:
-                await callback_query.answer(not_joined, show_alert=True)
-    
+                except UserNotParticipant:
+                    await callback_query.answer(f"Join the chat {force_chat_id} first then try!", show_alert=True)
+                    return  # Return early if user is not a participant
+
     except Exception as e:
         logger.error(f"Error processing callback query: {e}")
         await callback_query.answer("An unexpected error occurred. Please try again later.", show_alert=True)
