@@ -9,14 +9,14 @@ class Chats(BASE):
     __table_args__ = {'extend_existing': True}
     
     channel_id = Column(BigInteger, primary_key=True)
-    force_chats = Column(String)  # Store a comma-separated list of force chat IDs
+    force_chats = Column(String)  # Store a comma-separated list of force chat IDs (IDs based now)
     action = Column(String)
     ignore_service = Column(Boolean, default=True)
     only_owner = Column(Boolean, default=True)
 
     def __init__(self, channel_id, force_chats, action='mute', ignore_service=True, only_owner=True):
         self.channel_id = channel_id
-        self.force_chats = force_chats  # A list of chat IDs that the user must join
+        self.force_chats = force_chats  # Now expects a list of chat IDs
         self.action = action
         self.ignore_service = ignore_service
         self.only_owner = only_owner
@@ -43,19 +43,21 @@ async def num_chats():
     return await _execute_query(SESSION.query(Chats).count())
 
 
+# Get force chats as a list of IDs
 async def get_force_chats(chat_id):
     chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
     if chat:
-        return chat.force_chats.split(',')  # Return a list of channels
+        return chat.force_chats.split(',')  # Return a list of channel IDs
     return []
 
 
+# Save force chats as a list of IDs
 async def change_force_chats(chat_id, force_chats):
     chat = await _execute_query(SESSION.query(Chats).filter_by(channel_id=chat_id).first())
     if chat:
-        chat.force_chats = ','.join(force_chats)  # Save as a comma-separated list
+        chat.force_chats = ','.join(map(str, force_chats))  # Save as a comma-separated list of IDs
     else:
-        SESSION.add(Chats(channel_id=chat_id, force_chats=','.join(force_chats)))
+        SESSION.add(Chats(channel_id=chat_id, force_chats=','.join(map(str, force_chats))))
     await _execute_query(SESSION.commit())
 
 
