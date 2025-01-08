@@ -1,3 +1,4 @@
+#settings.py
 from pyrogram import Client, filters
 from ForceSubscribeBot.admin_check import admin_check
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
